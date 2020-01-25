@@ -67,6 +67,7 @@ type LightSchedule struct {
 // reached at the given time.
 type TimedColorTemperature struct {
 	Time             string `json:"time"`
+	Duration         string `json:"duration"`
 	ColorTemperature int    `json:"colorTemperature"`
 	Brightness       int    `json:"brightness"`
 }
@@ -263,7 +264,7 @@ func (configuration *Configuration) lightScheduleForDay(light int, date time.Tim
 	// Before sunrise candidates
 	schedule.beforeSunrise = []TimeStamp{}
 	for _, candidate := range lightSchedule.BeforeSunrise {
-		timestamp, err := candidate.AsTimestamp(date)
+		timestamp, err := candidate.AsTimestamp(schedule, true)
 		if err != nil {
 			log.Warningf("⚙ Found invalid configuration entry before sunrise: %+v (Error: %v)", candidate, err)
 			continue
@@ -274,7 +275,7 @@ func (configuration *Configuration) lightScheduleForDay(light int, date time.Tim
 	// After sunset candidates
 	schedule.afterSunset = []TimeStamp{}
 	for _, candidate := range lightSchedule.AfterSunset {
-		timestamp, err := candidate.AsTimestamp(date)
+		timestamp, err := candidate.AsTimestamp(schedule, false)
 		if err != nil {
 			log.Warningf("⚙ Found invalid configuration entry after sunset: %+v (Error: %v)", candidate, err)
 			continue
@@ -315,14 +316,22 @@ func (configuration *Configuration) HashValue() string {
 
 // AsTimestamp parses and validates a TimedColorTemperature and returns
 // a corresponding TimeStamp.
-func (color *TimedColorTemperature) AsTimestamp(referenceTime time.Time) (TimeStamp, error) {
+func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise bool) (TimeStamp, error) {
 	layout := "15:04"
 	t, err := time.Parse(layout, color.Time)
 	if err != nil {
-		return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
+		d, err := time.ParseDuration(color.Duration)
+		if err != nil {
+			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
+		}
+		if beforeSunrise {
+			t = schedule.sunrise.Time - d
+		}else{
+			t = schedule.sunset.Time + d
+		}
 	}
-	yr, mth, day := referenceTime.Date()
-	targetTime := time.Date(yr, mth, day, t.Hour(), t.Minute(), t.Second(), 0, referenceTime.Location())
+	yr, mth, day := schedule.endOfDay.Date()
+	targetTime := time.Date(yr, mth, day, t.Hour(), t.Minute(), t.Second(), 0, schedule.endOfDay.Location())
 
 	return TimeStamp{targetTime, color.ColorTemperature, color.Brightness}, nil
 }
