@@ -325,9 +325,9 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
 		}
 		if beforeSunrise {
-			t = schedule.sunrise.Time - d
-		}else{
-			t = schedule.sunset.Time + d
+			t = schedule.sunrise.Time.Add(-d)
+		} else {
+			t = schedule.sunset.Time.Add(d)
 		}
 	}
 	yr, mth, day := schedule.endOfDay.Date()
