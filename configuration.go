@@ -67,7 +67,7 @@ type LightSchedule struct {
 // reached at the given time.
 type TimedColorTemperature struct {
 	Time             string `json:"time"`
-	Duration         string `json:"duration"`
+	Offset           string `json:"offset"`
 	ColorTemperature int    `json:"colorTemperature"`
 	Brightness       int    `json:"brightness"`
 }
@@ -100,23 +100,28 @@ func (configuration *Configuration) initializeDefaults() {
 	bedTime.ColorTemperature = 2000
 	bedTime.Brightness = 60
 
-	var tvTime TimedColorTemperature
-	tvTime.Time = "20:00"
-	tvTime.ColorTemperature = 2300
-	tvTime.Brightness = 80
+	var evening TimedColorTemperature
+	evening.Offset = "1h"
+	evening.ColorTemperature = 2300
+	evening.Brightness = 80
 
-	var wakeupTime TimedColorTemperature
-	wakeupTime.Time = "4:00"
-	wakeupTime.ColorTemperature = 2000
-	wakeupTime.Brightness = 60
+	var nightTime TimedColorTemperature
+	nightTime.Time = "2:00"
+	nightTime.ColorTemperature = 2000
+	nightTime.Brightness = 60
+
+	var preSunrize TimedColorTemperature
+	preSunrize.Offset = "1h"
+	preSunrize.ColorTemperature = 2300
+	preSunrize.Brightness = 80
 
 	var defaultSchedule LightSchedule
 	defaultSchedule.Name = "default"
 	defaultSchedule.AssociatedDeviceIDs = []int{}
 	defaultSchedule.DefaultColorTemperature = 2750
 	defaultSchedule.DefaultBrightness = 100
-	defaultSchedule.AfterSunset = []TimedColorTemperature{tvTime, bedTime}
-	defaultSchedule.BeforeSunrise = []TimedColorTemperature{wakeupTime}
+	defaultSchedule.AfterSunset = []TimedColorTemperature{evening, bedTime}
+	defaultSchedule.BeforeSunrise = []TimedColorTemperature{nightTime, preSunrize}
 
 	configuration.Schedules = []LightSchedule{defaultSchedule}
 
@@ -320,7 +325,7 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 	layout := "15:04"
 	t, err := time.Parse(layout, color.Time)
 	if err != nil {
-		d, err := time.ParseDuration(color.Duration)
+		d, err := time.ParseDuration(color.Offset)
 		if err != nil {
 			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
 		}
