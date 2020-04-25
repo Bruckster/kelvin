@@ -105,7 +105,7 @@ func (light *Light) update(transistionTime time.Duration) (bool, error) {
 			}
 
 			light.Automatic = true
-			light.Initializing = true
+			light.Initializing = false
 			log.Debugf("💡 Light %s - Light was initialized to %vK at %v%% brightness", light.Name, light.TargetLightState.ColorTemperature, light.TargetLightState.Brightness)
 			return true, nil
 		}
@@ -122,7 +122,7 @@ func (light *Light) update(transistionTime time.Duration) (bool, error) {
 		if light.HueLight.hasState(light.TargetLightState.ColorTemperature, light.TargetLightState.Brightness) {
 			log.Printf("💡 Light %s - Detected matching target state. Activating Kelvin...", light.Name)
 			light.Automatic = true
-			light.Initializing = true
+			light.Initializing = false
 
 			// set correct target lightstate on HueLight
 			err := light.HueLight.setLightState(light.TargetLightState.ColorTemperature, light.TargetLightState.Brightness, transistionTime)
