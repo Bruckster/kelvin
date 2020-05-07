@@ -43,7 +43,7 @@ type Schedule struct {
 func (schedule *Schedule) currentInterval(timestamp time.Time) (Interval, error) {
 	// check if timestamp respresents the current day
 	if timestamp.After(schedule.endOfDay) {
-		return Interval{TimeStamp{time.Now(), 0, 0}, TimeStamp{time.Now(), 0, 0}}, fmt.Errorf("No current interval as the requested timestamp (%v) lays after the end of the current schedule (%v)", timestamp, schedule.endOfDay)
+		return Interval{TimeStamp{time.Now(), 0, 0, false}, TimeStamp{time.Now(), 0, 0, false}}, fmt.Errorf("No current interval as the requested timestamp (%v) lays after the end of the current schedule (%v)", timestamp, schedule.endOfDay)
 	}
 
 	// if we are between todays sunrise and sunset, return daylight interval
@@ -52,10 +52,10 @@ func (schedule *Schedule) currentInterval(timestamp time.Time) (Interval, error)
 	}
 
 	var before, after TimeStamp
-	// Before sunrise
+	// Before sunrise`
 	if timestamp.Before(schedule.sunrise.Time) {
 		yr, mth, dy := timestamp.Date()
-		startOfDay := TimeStamp{time.Date(yr, mth, dy, 0, 0, 0, 0, timestamp.Location()), -1, -1}
+		startOfDay := TimeStamp{time.Date(yr, mth, dy, 0, 0, 0, 0, timestamp.Location()), -1, -1, false}
 		candidates := append(schedule.beforeSunrise, startOfDay, schedule.sunrise)
 
 		before, after = findTargetTimes(timestamp, candidates)
@@ -72,7 +72,7 @@ func (schedule *Schedule) currentInterval(timestamp time.Time) (Interval, error)
 	// After sunset
 	if timestamp.After(schedule.sunset.Time) {
 		yr, mth, dy := timestamp.Date()
-		endOfDay := TimeStamp{time.Date(yr, mth, dy, 23, 59, 59, 0, timestamp.Location()), -1, -1}
+		endOfDay := TimeStamp{time.Date(yr, mth, dy, 23, 59, 59, 0, timestamp.Location()), -1, -1, false}
 		candidates := append(schedule.afterSunset, endOfDay, schedule.sunset)
 
 		before, after = findTargetTimes(timestamp, candidates)
@@ -88,8 +88,8 @@ func (schedule *Schedule) currentInterval(timestamp time.Time) (Interval, error)
 }
 
 func findTargetTimes(timestamp time.Time, candidates []TimeStamp) (TimeStamp, TimeStamp) {
-	beforeCandidate := TimeStamp{timestamp.AddDate(0, 0, -2), 0, 0}
-	afterCandidate := TimeStamp{timestamp.AddDate(0, 0, 2), 0, 0}
+	beforeCandidate := TimeStamp{timestamp.AddDate(0, 0, -2), 0, 0, false}
+	afterCandidate := TimeStamp{timestamp.AddDate(0, 0, 2), 0, 0, false}
 
 	for _, candidate := range candidates {
 		if candidate.Time.Before(timestamp) && candidate.Time.After(beforeCandidate.Time) {

@@ -70,6 +70,7 @@ type TimedColorTemperature struct {
 	Offset           string `json:"offset"`
 	ColorTemperature int    `json:"colorTemperature"`
 	Brightness       int    `json:"brightness"`
+	IgnoreChanges    bool   `json:"ignoreChanges"`
 }
 
 // Configuration encapsulates all relevant parameters for Kelvin to operate.
@@ -88,6 +89,7 @@ type TimeStamp struct {
 	Time             time.Time
 	ColorTemperature int
 	Brightness       int
+	IgnoreChanges    bool
 }
 
 var latestConfigurationVersion = 0
@@ -263,8 +265,8 @@ func (configuration *Configuration) lightScheduleForDay(light int, date time.Tim
 		return schedule, fmt.Errorf("Light %d is not associated with any schedule in configuration", light)
 	}
 
-	schedule.sunrise = TimeStamp{CalculateSunrise(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness}
-	schedule.sunset = TimeStamp{CalculateSunset(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness}
+	schedule.sunrise = TimeStamp{CalculateSunrise(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness, false}
+	schedule.sunset = TimeStamp{CalculateSunset(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness, false}
 
 	// Before sunrise candidates
 	schedule.beforeSunrise = []TimeStamp{}
@@ -327,7 +329,7 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 	if err != nil {
 		d, err := time.ParseDuration(color.Offset)
 		if err != nil {
-			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
+			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness, color.IgnoreChanges}, err
 		}
 		if beforeSunrise {
 			t = schedule.sunrise.Time.Add(-d)
@@ -338,7 +340,7 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 	yr, mth, day := schedule.endOfDay.Date()
 	targetTime := time.Date(yr, mth, day, t.Hour(), t.Minute(), t.Second(), 0, schedule.endOfDay.Location())
 
-	return TimeStamp{targetTime, color.ColorTemperature, color.Brightness}, nil
+	return TimeStamp{targetTime, color.ColorTemperature, color.Brightness, color.IgnoreChanges}, nil
 }
 
 func (configuration *Configuration) backup() error {
