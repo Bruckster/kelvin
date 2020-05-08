@@ -161,16 +161,14 @@ func (light *Light) update(transistionTime time.Duration) (bool, error) {
 	}
 
 	// Did the user manually change the light state?
-	if light.HueLight.hasChanged() {
-		if !light.Interval.Start.IgnoreChanges {
-			if log.GetLevel() == log.DebugLevel {
-				log.Debugf("💡 Light %s - Light state has been changed manually after %v (TargetColorTemperature: %d, CurrentColorTemperature: %d, TargetColor: %v, CurrentColor: %v, TargetBrightness: %d, CurrentBrightness: %d)", light.Name, time.Since(light.Appearance), light.HueLight.TargetColorTemperature, light.HueLight.CurrentColorTemperature, light.HueLight.TargetColor, light.HueLight.CurrentColor, light.HueLight.TargetBrightness, light.HueLight.CurrentBrightness)
-			} else {
-				log.Printf("💡 Light %s - Light state has been changed manually. Disabling Kelvin...", light.Name)
-			}
-			light.Automatic = false
-			return false, nil
+	if !light.Schedule.ignoreChanges && light.HueLight.hasChanged() {
+		if log.GetLevel() == log.DebugLevel {
+			log.Debugf("💡 Light %s - Light state has been changed manually after %v (TargetColorTemperature: %d, CurrentColorTemperature: %d, TargetColor: %v, CurrentColor: %v, TargetBrightness: %d, CurrentBrightness: %d)", light.Name, time.Since(light.Appearance), light.HueLight.TargetColorTemperature, light.HueLight.CurrentColorTemperature, light.HueLight.TargetColor, light.HueLight.CurrentColor, light.HueLight.TargetBrightness, light.HueLight.CurrentBrightness)
+		} else {
+			log.Printf("💡 Light %s - Light state has been changed manually. Disabling Kelvin...", light.Name)
 		}
+		light.Automatic = false
+		return false, nil
 	}
 
 	// Update of lightstate needed?

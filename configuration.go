@@ -61,6 +61,7 @@ type LightSchedule struct {
 	DefaultBrightness       int                     `json:"defaultBrightness"`
 	BeforeSunrise           []TimedColorTemperature `json:"beforeSunrise"`
 	AfterSunset             []TimedColorTemperature `json:"afterSunset"`
+	IgnoreChanges           bool                    `json:"ignoreChanges"`
 }
 
 // TimedColorTemperature represents a light configuration which will be
@@ -70,7 +71,6 @@ type TimedColorTemperature struct {
 	Offset           string `json:"offset"`
 	ColorTemperature int    `json:"colorTemperature"`
 	Brightness       int    `json:"brightness"`
-	IgnoreChanges    bool   `json:"ignoreChanges"`
 }
 
 // Configuration encapsulates all relevant parameters for Kelvin to operate.
@@ -89,7 +89,6 @@ type TimeStamp struct {
 	Time             time.Time
 	ColorTemperature int
 	Brightness       int
-	IgnoreChanges    bool
 }
 
 var latestConfigurationVersion = 0
@@ -265,8 +264,8 @@ func (configuration *Configuration) lightScheduleForDay(light int, date time.Tim
 		return schedule, fmt.Errorf("Light %d is not associated with any schedule in configuration", light)
 	}
 
-	schedule.sunrise = TimeStamp{CalculateSunrise(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness, false}
-	schedule.sunset = TimeStamp{CalculateSunset(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness, false}
+	schedule.sunrise = TimeStamp{CalculateSunrise(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness}
+	schedule.sunset = TimeStamp{CalculateSunset(date, configuration.Location.Latitude, configuration.Location.Longitude), lightSchedule.DefaultColorTemperature, lightSchedule.DefaultBrightness}
 
 	// Before sunrise candidates
 	schedule.beforeSunrise = []TimeStamp{}
@@ -291,6 +290,8 @@ func (configuration *Configuration) lightScheduleForDay(light int, date time.Tim
 	}
 
 	schedule.enableWhenLightsAppear = lightSchedule.EnableWhenLightsAppear
+	schedule.ignoreChanges = lightSchedule.IgnoreChanges
+
 	return schedule, nil
 }
 
@@ -329,7 +330,7 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 	if err != nil {
 		d, err := time.ParseDuration(color.Offset)
 		if err != nil {
-			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness, color.IgnoreChanges}, err
+			return TimeStamp{time.Now(), color.ColorTemperature, color.Brightness}, err
 		}
 		if beforeSunrise {
 			t = schedule.sunrise.Time.Add(-d)
@@ -340,7 +341,7 @@ func (color *TimedColorTemperature) AsTimestamp(schedule Schedule, beforeSunrise
 	yr, mth, day := schedule.endOfDay.Date()
 	targetTime := time.Date(yr, mth, day, t.Hour(), t.Minute(), t.Second(), 0, schedule.endOfDay.Location())
 
-	return TimeStamp{targetTime, color.ColorTemperature, color.Brightness, color.IgnoreChanges}, nil
+	return TimeStamp{targetTime, color.ColorTemperature, color.Brightness}, nil
 }
 
 func (configuration *Configuration) backup() error {
