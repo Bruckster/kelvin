@@ -109,7 +109,7 @@ func CalculateSunset(date time.Time, latitude float64, longitude float64) time.T
 	yr, mth, day := date.Date()
 	startOfDay := time.Date(yr, mth, day, 0, 0, 0, 0, date.Location())
 
-	return astrotime.CalcDusk(startOfDay, latitude, longitude, astrotime.GOLDEN_HOUR)
+	return astrotime.CalcSunset(startOfDay, latitude, longitude)
 }
 
 // CalculateSunrise calculates the sunrise for the given day based on
@@ -119,5 +119,5 @@ func CalculateSunrise(date time.Time, latitude float64, longitude float64) time.
 	yr, mth, day := date.Date()
 	startOfDay := time.Date(yr, mth, day, 0, 0, 0, 0, date.Location())
 
-	return astrotime.CalcDawn(startOfDay, latitude, longitude, astrotime.GOLDEN_HOUR)
+	return astrotime.CalcSunrise(startOfDay, latitude, longitude)
 }
