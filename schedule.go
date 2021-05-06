@@ -53,7 +53,7 @@ func (schedule *Schedule) currentInterval(timestamp time.Time) (Interval, error)
 	}
 
 	var before, after TimeStamp
-	// Before sunrise`
+	// Before sunrise
 	if timestamp.Before(schedule.sunrise.Time) {
 		yr, mth, dy := timestamp.Date()
 		startOfDay := TimeStamp{time.Date(yr, mth, dy, 0, 0, 0, 0, timestamp.Location()), -1, -1}
